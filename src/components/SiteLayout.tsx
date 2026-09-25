@@ -3,6 +3,8 @@ import { ArrowUpRight } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { LogoFull, LogoMark } from "./Logo";
 
+const AUTH_URL = "https://console.otexads.com/auth";
+
 const nav = [
   { href: "/#advertisers", label: "For Advertisers" },
   { href: "/#publishers", label: "For Publishers" },
@@ -12,12 +14,36 @@ const nav = [
 
 export function SiteHeader() {
   const [scrolled, setScrolled] = useState(false);
+
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 8);
     fn();
     window.addEventListener("scroll", fn);
     return () => window.removeEventListener("scroll", fn);
   }, []);
+
+  // Keep every existing advertiser/publisher login and signup CTA pointed at
+  // the single console auth entry point, including CTAs rendered by routes.
+  useEffect(() => {
+    const handleAuthLinks = (event: MouseEvent) => {
+      const target = event.target as HTMLElement | null;
+      const anchor = target?.closest("a");
+      if (!anchor) return;
+
+      const url = new URL(anchor.href, window.location.origin);
+      if (
+        url.hostname === "console.otexads.com" &&
+        (url.pathname === "/login" || url.pathname === "/signup")
+      ) {
+        event.preventDefault();
+        window.location.assign(AUTH_URL);
+      }
+    };
+
+    document.addEventListener("click", handleAuthLinks);
+    return () => document.removeEventListener("click", handleAuthLinks);
+  }, []);
+
   return (
     <header
       className={`fixed top-0 inset-x-0 z-50 transition-colors duration-300 bg-[var(--cream)] ${
@@ -48,19 +74,19 @@ export function SiteHeader() {
         </nav>
         <div className="flex items-center gap-1.5">
           <a
-            href="https://console.otexads.com/login"
+            href={AUTH_URL}
             className="hidden sm:inline-flex text-[13px] px-3 py-1.5 text-foreground/70 hover:text-foreground transition"
           >
             Login
           </a>
           <a
-            href="https://console.otexads.com/signup?type=publisher"
+            href={AUTH_URL}
             className="hidden md:inline-flex text-[13px] font-medium px-3.5 py-1.5 rounded-full border border-border text-foreground/80 hover:text-foreground hover:border-foreground/40 transition"
           >
             Monetize
           </a>
           <a
-            href="https://console.otexads.com/signup?type=advertiser"
+            href={AUTH_URL}
             className="inline-flex items-center gap-1 text-[13px] font-medium px-3.5 py-1.5 rounded-full bg-foreground text-background hover:opacity-90 transition"
           >
             Start advertising <ArrowUpRight className="h-3 w-3" />
@@ -96,8 +122,8 @@ export function SiteFooter() {
           <div>
             <div className="text-[11px] uppercase tracking-[0.2em] text-foreground/40 mb-4">Sign in</div>
             <ul className="space-y-2.5">
-              <li><a href="https://console.otexads.com/login?type=advertiser" className="text-foreground/70 hover:text-foreground transition">Advertiser Login</a></li>
-              <li><a href="https://console.otexads.com/login?type=publisher" className="text-foreground/70 hover:text-foreground transition">Publisher Login</a></li>
+              <li><a href={AUTH_URL} className="text-foreground/70 hover:text-foreground transition">Advertiser Login</a></li>
+              <li><a href={AUTH_URL} className="text-foreground/70 hover:text-foreground transition">Publisher Login</a></li>
               <li><a href="https://console.otexads.com/support" className="text-foreground/70 hover:text-foreground transition">Support</a></li>
             </ul>
           </div>
